@@ -10,8 +10,6 @@
 
 import Foundation
 
-print("Hello, World!")
-
 let thing = CommandLine.arguments[1]
 
 print(CommandLine.arguments[0])
@@ -49,6 +47,7 @@ if #available(OSX 10.11, *) {
     .flatMap { try? JSONSerialization.jsonObject(with: $0, options: []) as? [String: Any] }
     .flatMap { $0 }.flatMap { $0["properties"] as? [String: Any] }
     .flatMap { $0["MainFeed_time_spent_seconds"] as? Int }
+    .filter { $0 > 5 }
   
 //  print("first item: \(timeSpentInts.first!)")
   print("total count of events with time spent field: \(timeSpentInts.count)")
