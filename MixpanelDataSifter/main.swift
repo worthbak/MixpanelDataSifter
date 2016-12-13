@@ -14,6 +14,13 @@ import Foundation
 // ./sifter <api_key> <event_name> <from_date> <to_date> <requested_operation>
 // requested_operation options: count, avg, max, avg_filter <int>
 
+func printTotals(_ array: [Int]) {
+  let timeSpentTotal = array.reduce(0, +)
+  let average = Double(timeSpentTotal) / Double(array.count)
+  print("average: \(average)")
+  print("max:\((array.max() ?? 0) / 60) minutes")
+}
+
 if #available(OSX 10.11, *) {
   if CommandLine.arguments.count > 1, CommandLine.arguments[1] == "--help" {
     print("expected format")
@@ -70,67 +77,43 @@ if #available(OSX 10.11, *) {
   }
   
   let stringArray = stringData.components(separatedBy: CharacterSet.newlines)
-  let timeSpentInts = stringArray
+  let allEventProperties = stringArray
     .flatMap { $0.data(using: .utf8) }
     .flatMap { try? JSONSerialization.jsonObject(with: $0, options: []) as? [String: Any] }
     .flatMap { $0 }
-  //  .flatMap { $0["properties"] as? [String: Any] }
+    .flatMap { $0["properties"] as? [String: Any] }
+  
+  let allUserIDs = allEventProperties.flatMap { $0["userID"] as? Int }
+  let uniqueUserIDs = Set(allUserIDs)
+  
+  print("total events count: \(allEventProperties.count)")
+  print("events per user: \(allEventProperties.count / uniqueUserIDs.count)")
+  
+  printTotals(allEventProperties
+    .flatMap { $0["MainFeed_time_spent_seconds"] as? Int }
+    .filter { $0 > 5 }
+  )
+  
+  print("\n\n")
+  
+  let superUserIDs = [28542, 33972, 34583, 54387, 60518, 62421, 128104, 144563, 149035, 149820, 177653, 187280, 192685, 207188, 242509, 250372, 252572, 260893, 265554, 268691, 303556, 326996, 333364, 334990, 338013, 352384, 353468, 382547, 389872, 394193, 394989, 397706, 410783, 415391, 417520, 417588, 418043, 418916, 420310, 422898, 423569, 423965, 425868, 430986, 432789, 433013, 436421, 437184, 458571, 464232]
+  
+  let superUserEvents = allEventProperties.filter {
+    properties in
+    guard let userID = properties["userID"] as? Int else { return false }
+    return superUserIDs.contains(userID)
+  }
+  
+  print("super user events count: \(superUserEvents.count)")
+  print("events per super user: \( superUserEvents.count / superUserIDs.count )")
+  
+  printTotals(superUserEvents
+    .flatMap { $0["MainFeed_time_spent_seconds"] as? Int }
+    .filter { $0 > 5 }
+  )
+  
   //  .flatMap { $0["MainFeed_time_spent_seconds"] as? Int }
-  print("total count of events with time spent field: \(timeSpentInts.count)")
+//  print("total count of events with time spent field: \(timeSpentInts.count)")
 } else {
   fatalError()
 }
-
-
-
-//let thing = CommandLine.arguments[1]
-//
-//
-//
-//print(CommandLine.arguments[0])
-//
-//print(thing)
-//
-//let currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-//
-//if #available(OSX 10.11, *) {
-//  let url = URL(fileURLWithPath: CommandLine.arguments[1], relativeTo: currentDirectoryURL)
-//  print("script at: " + url.path)
-//  
-//  
-//  guard let data = try? Data(contentsOf: url, options: NSData.ReadingOptions.uncached) else {
-//    print("Failed to read data from file at path: \(url.absoluteString)")
-//    exit(1)
-//  }
-//  
-//  guard let stringData = String.init(data: data, encoding: String.Encoding.utf8) else {
-//    print("Failed to load string from data")
-//    exit(1)
-//  }
-//  
-//  //let stringArray = stringData.componentsSeparatedByCharactersInSet(NSCharacterSet.newlineCharacterSet())
-//  let stringArray = stringData.components(separatedBy: CharacterSet.newlines)
-//  
-////  print(stringArray.count)
-////  print(stringArray[1])
-//  
-//  
-//  
-//  // each string in this array should be valid json
-//  let timeSpentInts = stringArray
-//    .flatMap { $0.data(using: .utf8) }
-//    .flatMap { try? JSONSerialization.jsonObject(with: $0, options: []) as? [String: Any] }
-//    .flatMap { $0 }.flatMap { $0["properties"] as? [String: Any] }
-//    .flatMap { $0["MainFeed_time_spent_seconds"] as? Int }
-////    .filter { $0 > 5 } increases build time
-//  
-////  print("first item: \(timeSpentInts.first!)")
-//  print("total count of events with time spent field: \(timeSpentInts.count)")
-//  
-//  let timeSpentTotal = timeSpentInts.reduce(0, +)
-//  let average = Double(timeSpentTotal) / Double(timeSpentInts.count)
-//  print("average: \(average)")
-//  print("max:\((timeSpentInts.max() ?? 0) / 60)")
-//}
-//
-//
